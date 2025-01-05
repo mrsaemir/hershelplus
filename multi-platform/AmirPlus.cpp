@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
     // Parse IP address and port from arguments
     char* ifname = argv[1];
     char* ip = argv[2];
-    unsigned short port = static_cast<unsigned short>(std::stoi(argv[2]));
+    unsigned short port = static_cast<unsigned short>(std::stoi(argv[3]));
     printf("Getting Signature for %s:%d\n", ip, port);
 
     LiveFingerprinter lf;
