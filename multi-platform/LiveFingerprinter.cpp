@@ -11,13 +11,11 @@ int CreatePacket(int adapterCount, char *adapterName, char *dest, unsigned char 
 char  errorBuffer[ PCAP_ERRBUF_SIZE ];
 const int TIMEOUT = 120; //2 mins
 
-int LiveFingerprinter::setupPcapAdapter(){
+int LiveFingerprinter::setupPcapAdapter(char * target_adapter){
 
     pcap_if_t* allAdapters;
-    int crtAdapter;
-    int adapterNumber;	
+    int crtAdapter;	
     pcap_if_t* adapter;
-    vector<char*> adapterReadableNames;
 
     // retrieve the adapters from the computer
     if( pcap_findalldevs(&allAdapters, errorBuffer ) == -1 )
@@ -33,55 +31,19 @@ int LiveFingerprinter::setupPcapAdapter(){
         return -1;
     }
 	
-    // print the list of adapters along with basic information about an adapter
-    printf("Listing system adapters:\n");
-    crtAdapter = 0;
-    for( adapter = allAdapters; adapter != NULL; adapter = adapter->next){		
-		pcap_addr* addresses = adapter->addresses;
-		while (addresses != NULL && addresses->addr->sa_family != AF_INET) addresses = addresses->next;
-		
-		if (addresses != NULL){
-			sockaddr_in * sa = (sockaddr_in *)(addresses->addr);
-			char* ip = inet_ntoa(sa->sin_addr);
-			
-			#ifdef _WIN32
-			adapterReadableNames.push_back(adapter->description);
-			#else 
-			adapterReadableNames.push_back(adapter->name);
-			#endif			
-			
-			printf("\n%d. %s at %s\n", ++crtAdapter, adapterReadableNames.back(), ip);
-			
-		}
-		
-    }
-    printf( "\n" );
-
-	if (crtAdapter > 1){
-		printf( "Enter the adapter number between 1 and %d: ", crtAdapter );
-		scanf( "%d", &adapterNumber );
-	}
-	else adapterNumber = 1;
-	
-
-	printf("\n-----------------------------------------------\n");
-    
-    if( adapterNumber < 1 || adapterNumber > crtAdapter )
-    {
-        printf( "\nAdapter number out of range.\n" );
-        // Free the adapter list
-        pcap_freealldevs( allAdapters );
-        return -1;
-    }
-    
     // parse the list until we reach the desired adapter
     adapter = allAdapters;
-    for( crtAdapter = 0; crtAdapter < adapterNumber - 1; crtAdapter++ ){
-        adapter = adapter->next;
+	while (strcmp(adapter->name, target_adapter) != 0 && adapter->next != NULL) {
+		adapter = adapter->next;
+	}
+	
+	if (strcmp(adapter->name, target_adapter) != 0) {
+		printf("Target adapter %s not found.", target_adapter);
+		return -1;
 	}
 
 	//open the adapter
-	printf("Opening device %s\n", adapterReadableNames[adapterNumber-1]);
+	printf("Opening device %s\n", adapter->name);
 	adapterHandle = pcap_open_live( adapter->name, // name of the adapter
                                65536,         // portion of the packet to capture
                                               // 65536 guarantees that the whole 
@@ -91,10 +53,10 @@ int LiveFingerprinter::setupPcapAdapter(){
                                errorBuffer    // error buffer
                               );
 	if( adapterHandle == NULL ){
-        printf( "\nUnable to open the adapter %s\n", adapterReadableNames[adapterNumber-1]);
+        printf( "\nUnable to open the adapter %s\n", adapter->name);
         return -1;
     }	    
-    else printf("Adapter %s opened successfully\n", adapterReadableNames[adapterNumber-1]);
+    else printf("Adapter %s opened successfully\n", adapter->name);
            
     //store the adapter name for future pcap calls
     adapterName = new char[strlen(adapter->name) + 1];

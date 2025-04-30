@@ -82,7 +82,7 @@ struct route_info {
 class LiveFingerprinter{
 
 public:
-	int setupPcapAdapter();
+	int setupPcapAdapter(char* target_adapter);
 	int getFingerprint(char* target, unsigned short port, Signature& sig);
 	~LiveFingerprinter();
 	

@@ -367,12 +367,14 @@ vector<Signature> readSigList(char *filename){
 }
 
 int main(int argc, char* argv[]){
-	if (argc < 4){
+	if (argc < 5){
 		printf("%s can be run in two modes: Live and Offline.\n", argv[0]);
-		printf("To run in live mode: %s <database_file> <label_mapping_file> <IP> <port>\n", argv[0]);
-		printf("To run in offline mode: %s <database_file> <label_mapping_file> <observations_file>\n", argv[0]);
+		printf("To run in live mode: %s <database_file> <label_mapping_file> <IP> <port> <ifname>\n", argv[0]);
+		printf("To run in offline mode: %s <database_file> <label_mapping_file> <observations_file> <ifname>\n", argv[0]);
 		return 0;
 	}
+
+	char * ifname = argv[5];
 
 	//read database signatures	
 	vector<Signature> database_sigs = readSigList(argv[1]);
@@ -412,7 +414,7 @@ int main(int argc, char* argv[]){
 		//set up for live fingerprinting
 		printf("Starting Live fingerprinting of %s:%d...\n", argv[3], port);
 		LiveFingerprinter lf;
-		if (lf.setupPcapAdapter() < 0){
+		if (lf.setupPcapAdapter(ifname) < 0){
 			printf("Error setting up pcap!\n");
 			exit(-1);
 		}
